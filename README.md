@@ -19,20 +19,22 @@ A full-stack employee management system built with React, Node.js, Express, and 
 
 ## Project Structure
 
+```
 employee-management/
-├── client/                 # React frontend
+├── client/                 
 │   ├── public/
 │   └── src/
 │       ├── components/
-│       │   └── ui/        # UI components
+│       │   └── ui/        
 │       ├── App.js
 │       ├── index.js
 │       └── index.css
-└── server/                # Node.js backend
-├── config/
-├── controllers/
-├── routes/
-└── server.js
+└── server/                
+    ├── config/
+    ├── controllers/
+    ├── routes/
+    └── server.js
+```
 
 ## Setup Instructions
 
@@ -42,17 +44,24 @@ employee-management/
 cd server
 npm install
 npm start
+```
 
 The server will start on port 1111.
-FFrontend Setup
-bashCopycd client
+
+### Frontend Setup
+
+```bash
+cd client
 npm install
 npm start
+```
+
 The frontend will start on port 3000.
-API Endpoints
 
-GET /api/departments - Get all departments
-POST /api/departments - Create a new department
-GET /api/employees - Get all employees
-POST /api/employees - Create a new employee
+## API Endpoints
 
+- `GET /api/departments` - Get all departments
+- `POST /api/departments` - Create a new department
+- `GET /api/employees` - Get all employees
+- `POST /api/employees` - Create a new employee
+```
