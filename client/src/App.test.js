@@ -1,8 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+beforeEach(() => {
+  global.fetch = jest.fn((url) =>
+    Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve(
+          url.endsWith('/employees')
+            ? [{ id: 1, name: 'Ann', department: 'Engineering', address: 'Pune' }]
+            : [{ id: 1, name: 'Engineering', description: '' }]
+        ),
+    })
+  );
+});
+
+test('renders the forms and the employees loaded from the API', async () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /add department/i })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /add employee/i })).toBeInTheDocument();
+  expect(await screen.findByText('Ann')).toBeInTheDocument();
 });
