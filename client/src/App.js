@@ -10,16 +10,30 @@ import {
   SelectValue,
 } from "./components/ui/select";
 
+// Backend URL; override with REACT_APP_API_URL in client/.env
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:1111/api';
+
+// Throws with the server's error message when the response is not OK.
+const request = async (path, options) => {
+  const response = await fetch(`${API_URL}${path}`, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+  return data;
+};
+
 // Department Form Component
 const DepartmentForm = ({ onAddDepartment }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onAddDepartment({ name, description });
-    setName('');
-    setDescription('');
+    if (await onAddDepartment({ name, description })) {
+      setName('');
+      setDescription('');
+    }
   };
 
   return (
@@ -27,11 +41,14 @@ const DepartmentForm = ({ onAddDepartment }) => {
       <h2 className="text-lg font-semibold mb-4">Add Department</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
+          aria-label="Department name"
           placeholder="Department Name"
+          required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <Input
+          aria-label="Department description"
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -48,12 +65,13 @@ const EmployeeForm = ({ departments, onAddEmployee }) => {
   const [department, setDepartment] = useState('');
   const [address, setAddress] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onAddEmployee({ name, department, address });
-    setName('');
-    setDepartment('');
-    setAddress('');
+    if (await onAddEmployee({ name, department, address })) {
+      setName('');
+      setDepartment('');
+      setAddress('');
+    }
   };
 
   return (
@@ -61,12 +79,14 @@ const EmployeeForm = ({ departments, onAddEmployee }) => {
       <h2 className="text-lg font-semibold mb-4">Add Employee</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
+          aria-label="Employee name"
           placeholder="Employee Name"
+          required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <Select value={department} onValueChange={setDepartment}>
-          <SelectTrigger>
+          <SelectTrigger aria-label="Employee department">
             <SelectValue placeholder="Select Department" />
           </SelectTrigger>
           <SelectContent>
@@ -78,6 +98,7 @@ const EmployeeForm = ({ departments, onAddEmployee }) => {
           </SelectContent>
         </Select>
         <Input
+          aria-label="Employee address"
           placeholder="Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
@@ -103,13 +124,14 @@ const EmployeeList = ({ employees, departments }) => {
     <div className="space-y-4">
       <div className="flex gap-4">
         <Input
+          aria-label="Filter employees by name"
           placeholder="Filter by name"
           value={nameFilter}
           onChange={(e) => setNameFilter(e.target.value)}
           className="flex-1"
         />
         <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px]" aria-label="Filter employees by department">
             <SelectValue placeholder="Filter by Department" />
           </SelectTrigger>
           <SelectContent>
@@ -142,6 +164,13 @@ const EmployeeList = ({ employees, departments }) => {
                 <td className="px-4 py-2">{employee.address}</td>
               </tr>
             ))}
+            {filteredEmployees.length === 0 && (
+              <tr className="border-t">
+                <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                  No employees found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -158,68 +187,66 @@ const App = () => {
   useEffect(() => {
     fetchDepartments();
     fetchEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('http://localhost:1111/api/departments');
-      const data = await response.json();
-      setDepartments(data);
+      setDepartments(await request('/departments'));
     } catch (error) {
-      setError('Error fetching departments');
+      setError(`Error fetching departments: ${error.message}`);
       console.error('Error fetching departments:', error);
     }
   };
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch('http://localhost:1111/api/employees');
-      const data = await response.json();
-      setEmployees(data);
+      setEmployees(await request('/employees'));
     } catch (error) {
-      setError('Error fetching employees');
+      setError(`Error fetching employees: ${error.message}`);
       console.error('Error fetching employees:', error);
     }
   };
 
+  const post = (path, body) =>
+    request(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+  // Return true on success so the form knows it can clear its fields.
   const handleAddDepartment = async (department) => {
     try {
-      const response = await fetch('http://localhost:1111/api/departments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(department),
-      });
-      if (response.ok) {
-        fetchDepartments();
-      }
+      await post('/departments', department);
+      setError('');
+      fetchDepartments();
+      return true;
     } catch (error) {
-      setError('Error adding department');
-      console.error('Error adding department:', error);
+      setError(`Error adding department: ${error.message}`);
+      return false;
     }
   };
 
   const handleAddEmployee = async (employee) => {
+    if (!employee.department) {
+      setError('Please select a department for the employee');
+      return false;
+    }
     try {
-      const response = await fetch('http://localhost:1111/api/employees', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(employee),
-      });
-      if (response.ok) {
-        fetchEmployees();
-      }
+      await post('/employees', employee);
+      setError('');
+      fetchEmployees();
+      return true;
     } catch (error) {
-      setError('Error adding employee');
-      console.error('Error adding employee:', error);
+      setError(`Error adding employee: ${error.message}`);
+      return false;
     }
   };
 
   return (
     <div className="container mx-auto p-4 space-y-8">
+      <h1 className="text-2xl font-bold">Employee Management System</h1>
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
