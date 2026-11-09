@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import App from './App';
 
 beforeEach(() => {
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     Promise.resolve({
       ok: true,
       json: () =>
