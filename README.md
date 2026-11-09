@@ -12,13 +12,13 @@ A small full-stack app for managing departments and employees: a React frontend 
 
 ## Tech stack
 
-- **Frontend:** React 19 (Create React App / `react-scripts` 5), Tailwind CSS 3, shadcn/ui-style components built on Radix UI Select
+- **Frontend:** React 19 built with Vite 8, Tailwind CSS 3, shadcn/ui-style components built on Radix UI Select
 - **Backend:** Node.js, Express 4, `sqlite3`
-- **Tests:** Jest + React Testing Library (via `react-scripts test`)
+- **Tests:** Vitest + React Testing Library (jsdom)
 
 ## Getting started
 
-Requirements: Node.js 18+ (tested with Node 26).
+Requirements: Node.js 20.19+ or 22.12+ (required by Vite 8; tested with Node 26).
 
 ### 1. Backend (port 1111)
 
@@ -40,16 +40,17 @@ The SQLite database file `server/employee_management.db` is created automaticall
 ```bash
 cd client
 npm install
-npm start
+npm run dev        # or: npm start (alias)
 ```
 
-Open <http://localhost:3000>. The frontend calls `http://localhost:1111/api` by default; to point it elsewhere, copy `client/.env.example` to `client/.env` and set `REACT_APP_API_URL`.
+Open <http://localhost:3000>. The frontend calls `http://localhost:1111/api` by default; to point it elsewhere, copy `client/.env.example` to `client/.env` and set `VITE_API_URL` (Vite only exposes variables prefixed with `VITE_`; they are read at dev-server start / build time).
 
 Other client scripts:
 
 ```bash
-npm test           # run the test suite
+npm test           # run the test suite once (Vitest); npm run test:watch to watch
 npm run build      # production build in client/build
+npm run preview    # serve the production build on http://localhost:3000
 ```
 
 ## API
@@ -65,12 +66,15 @@ npm run build      # production build in client/build
 
 ```
 client/
-  public/                    static HTML, favicon, manifest
+  index.html                 HTML entry (loads src/index.jsx)
+  public/                    static assets: favicon, manifest, robots.txt
   src/
-    App.js                   forms, employee list, API calls
-    App.test.js              render test with mocked fetch
+    index.jsx                React entry point
+    App.jsx                  forms, employee list, API calls
+    App.test.jsx             render test with mocked fetch
     components/ui/           Button, Input, Select, Alert
     index.css                Tailwind + theme CSS variables
+  vite.config.mjs            Vite + Vitest config (dev port 3000, output in build/)
   tailwind.config.js
 server/
   server.js                  Express app

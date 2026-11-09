@@ -10,8 +10,8 @@ import {
   SelectValue,
 } from "./components/ui/select";
 
-// Backend URL; override with REACT_APP_API_URL in client/.env
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:1111/api';
+// Backend URL; override with VITE_API_URL in client/.env
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1111/api';
 
 // Throws with the server's error message when the response is not OK.
 const request = async (path, options) => {
